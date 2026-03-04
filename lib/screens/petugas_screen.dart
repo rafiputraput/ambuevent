@@ -11,12 +11,11 @@ import '../service/routing_service.dart';
 import '../models/user_models.dart';
 
 // =====================================================================
-// WRAPPER — Bottom Nav khusus petugas
+// WRAPPER
 // =====================================================================
 class PetugasHomeWrapper extends StatefulWidget {
   final UserModel petugasUser;
   final VoidCallback onLogout;
-
   const PetugasHomeWrapper({
     super.key,
     required this.petugasUser,
@@ -36,9 +35,7 @@ class _PetugasHomeWrapperState extends State<PetugasHomeWrapper> {
       PetugasDashboardScreen(petugasUser: widget.petugasUser),
       PetugasMapScreen(petugasUser: widget.petugasUser),
       PetugasProfileScreen(
-        petugasUser: widget.petugasUser,
-        onLogout: widget.onLogout,
-      ),
+          petugasUser: widget.petugasUser, onLogout: widget.onLogout),
     ];
 
     return Scaffold(
@@ -77,17 +74,13 @@ class _PetugasHomeWrapperState extends State<PetugasHomeWrapper> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon,
-              color: isActive ? Colors.black : Colors.black45, size: 26),
+          Icon(icon, color: isActive ? Colors.black : Colors.black45, size: 26),
           const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: isActive ? Colors.black : Colors.black45,
-            ),
-          ),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: isActive ? Colors.black : Colors.black45)),
         ],
       ),
     );
@@ -95,20 +88,18 @@ class _PetugasHomeWrapperState extends State<PetugasHomeWrapper> {
 }
 
 // =====================================================================
-// 1. DASHBOARD — status ambulance + daftar booking yang ditugaskan
+// 1. DASHBOARD
 // =====================================================================
 class PetugasDashboardScreen extends StatefulWidget {
   final UserModel petugasUser;
   const PetugasDashboardScreen({super.key, required this.petugasUser});
 
   @override
-  State<PetugasDashboardScreen> createState() =>
-      _PetugasDashboardScreenState();
+  State<PetugasDashboardScreen> createState() => _PetugasDashboardScreenState();
 }
 
 class _PetugasDashboardScreenState extends State<PetugasDashboardScreen> {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
-
   Map<String, dynamic>? _myAmbulance;
   bool _loadingAmb = true;
 
@@ -136,29 +127,21 @@ class _PetugasDashboardScreenState extends State<PetugasDashboardScreen> {
     });
   }
 
-  Color _statusColor(String? status) {
-    switch (status) {
-      case 'Tersedia':
-        return Colors.green;
-      case 'Booked Event':
-        return Colors.blue;
-      case 'Maintenance':
-        return Colors.orange;
-      default:
-        return Colors.grey;
+  Color _statusColor(String? s) {
+    switch (s) {
+      case 'Tersedia':    return Colors.green;
+      case 'Booked Event': return Colors.blue;
+      case 'Maintenance': return Colors.orange;
+      default:            return Colors.grey;
     }
   }
 
-  IconData _statusIcon(String? status) {
-    switch (status) {
-      case 'Tersedia':
-        return Icons.check_circle;
-      case 'Booked Event':
-        return Icons.event_available;
-      case 'Maintenance':
-        return Icons.build;
-      default:
-        return Icons.help_outline;
+  IconData _statusIcon(String? s) {
+    switch (s) {
+      case 'Tersedia':    return Icons.check_circle;
+      case 'Booked Event': return Icons.event_available;
+      case 'Maintenance': return Icons.build;
+      default:            return Icons.help_outline;
     }
   }
 
@@ -169,7 +152,6 @@ class _PetugasDashboardScreenState extends State<PetugasDashboardScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── Header merah ──
             Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
@@ -188,13 +170,11 @@ class _PetugasDashboardScreenState extends State<PetugasDashboardScreen> {
                       CircleAvatar(
                         radius: 26,
                         backgroundColor: Colors.white24,
-                        backgroundImage:
-                            widget.petugasUser.photoUrl.isNotEmpty
-                                ? NetworkImage(widget.petugasUser.photoUrl)
-                                : null,
+                        backgroundImage: widget.petugasUser.photoUrl.isNotEmpty
+                            ? NetworkImage(widget.petugasUser.photoUrl)
+                            : null,
                         child: widget.petugasUser.photoUrl.isEmpty
-                            ? const Icon(Icons.person,
-                                color: Colors.white, size: 28)
+                            ? const Icon(Icons.person, color: Colors.white, size: 28)
                             : null,
                       ),
                       const SizedBox(width: 12),
@@ -203,38 +183,30 @@ class _PetugasDashboardScreenState extends State<PetugasDashboardScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text('Halo, Petugas 👋',
-                                style: TextStyle(
-                                    color: Colors.white70, fontSize: 12)),
-                            Text(
-                              widget.petugasUser.name,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                                style: TextStyle(color: Colors.white70, fontSize: 12)),
+                            Text(widget.petugasUser.name,
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: Colors.white24,
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Text(
-                          'PETUGAS',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold),
-                        ),
+                        child: const Text('PETUGAS',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
                   const SizedBox(height: 20),
-                  // ── Kartu Status Ambulance ──
                   if (_loadingAmb)
                     const Center(
                         child: CircularProgressIndicator(color: Colors.white))
@@ -245,21 +217,19 @@ class _PetugasDashboardScreenState extends State<PetugasDashboardScreen> {
                         color: Colors.white24,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.warning_amber_rounded,
-                              color: Colors.white70, size: 18),
-                          SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Belum ada armada yang di-assign ke Anda.',
-                              style: TextStyle(color: Colors.white70, fontSize: 13),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                      child: const Row(children: [
+                        Icon(Icons.warning_amber_rounded,
+                            color: Colors.white70, size: 18),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Belum ada armada yang di-assign ke Anda.',
+                            style: TextStyle(color: Colors.white70, fontSize: 13),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ],
-                      ),
+                        ),
+                      ]),
                     )
                   else
                     Container(
@@ -268,165 +238,129 @@ class _PetugasDashboardScreenState extends State<PetugasDashboardScreen> {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.red.shade50,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(Icons.local_hospital,
-                                color: Colors.red, size: 28),
+                      child: Row(children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _myAmbulance!['plate'] ?? '-',
+                          child: const Icon(Icons.local_hospital,
+                              color: Colors.red, size: 28),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(_myAmbulance!['plate'] ?? '-',
                                   style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16),
-                                ),
-                                const Text('Armada saya',
-                                    style: TextStyle(
-                                        color: Colors.grey, fontSize: 12)),
-                              ],
-                            ),
+                                      fontWeight: FontWeight.bold, fontSize: 16)),
+                              const Text('Armada saya',
+                                  style: TextStyle(color: Colors.grey, fontSize: 12)),
+                            ],
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: _statusColor(_myAmbulance!['status'])
-                                  .withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                  color: _statusColor(
-                                      _myAmbulance!['status'])),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                    _statusIcon(_myAmbulance!['status']),
-                                    size: 12,
-                                    color: _statusColor(
-                                        _myAmbulance!['status'])),
-                                const SizedBox(width: 4),
-                                Text(
-                                  _myAmbulance!['status'] ?? '-',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: _statusColor(
-                                        _myAmbulance!['status']),
-                                  ),
-                                ),
-                              ],
-                            ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: _statusColor(_myAmbulance!['status'])
+                                .withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                                color: _statusColor(_myAmbulance!['status'])),
                           ),
-                        ],
-                      ),
+                          child: Row(mainAxisSize: MainAxisSize.min, children: [
+                            Icon(_statusIcon(_myAmbulance!['status']),
+                                size: 12,
+                                color: _statusColor(_myAmbulance!['status'])),
+                            const SizedBox(width: 4),
+                            Text(
+                              _myAmbulance!['status'] ?? '-',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: _statusColor(_myAmbulance!['status'])),
+                            ),
+                          ]),
+                        ),
+                      ]),
                     ),
                 ],
               ),
             ),
-
-            // ── Body ──
             Expanded(
               child: ListView(
-                padding:
-                    const EdgeInsets.fromLTRB(16, 20, 16, 100),
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
                 children: [
-                  // Ringkasan cepat
-                  Row(
-                    children: [
-                      _summaryCard(
-                        icon: Icons.calendar_today,
-                        label: 'Tugas Aktif',
-                        color: Colors.blue,
-                        valueWidget: StreamBuilder<QuerySnapshot>(
-                          stream: _db
-                              .collection('bookings')
-                              .where('petugasId',
-                                  isEqualTo: widget.petugasUser.uid)
-                              .where('status',
-                                  isEqualTo: 'Menunggu Konfirmasi')
-                              .snapshots(),
-                          builder: (ctx, snap) => Text(
-                            '${snap.data?.docs.length ?? 0}',
-                            style: const TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue),
-                          ),
+                  Row(children: [
+                    _summaryCard(
+                      icon: Icons.calendar_today,
+                      label: 'Tugas Aktif',
+                      color: Colors.blue,
+                      valueWidget: StreamBuilder<QuerySnapshot>(
+                        stream: _db
+                            .collection('bookings')
+                            .where('petugasId', isEqualTo: widget.petugasUser.uid)
+                            .where('status', isEqualTo: 'Menunggu Konfirmasi')
+                            .snapshots(),
+                        builder: (ctx, snap) => Text(
+                          '${snap.data?.docs.length ?? 0}',
+                          style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      _summaryCard(
-                        icon: Icons.check_circle_outline,
-                        label: 'Selesai',
-                        color: Colors.green,
-                        valueWidget: StreamBuilder<QuerySnapshot>(
-                          stream: _db
-                              .collection('bookings')
-                              .where('petugasId',
-                                  isEqualTo: widget.petugasUser.uid)
-                              .where('status', isEqualTo: 'Selesai')
-                              .snapshots(),
-                          builder: (ctx, snap) => Text(
-                            '${snap.data?.docs.length ?? 0}',
-                            style: const TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green),
-                          ),
+                    ),
+                    const SizedBox(width: 12),
+                    _summaryCard(
+                      icon: Icons.check_circle_outline,
+                      label: 'Selesai',
+                      color: Colors.green,
+                      valueWidget: StreamBuilder<QuerySnapshot>(
+                        stream: _db
+                            .collection('bookings')
+                            .where('petugasId', isEqualTo: widget.petugasUser.uid)
+                            .where('status', isEqualTo: 'Selesai')
+                            .snapshots(),
+                        builder: (ctx, snap) => Text(
+                          '${snap.data?.docs.length ?? 0}',
+                          style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green),
                         ),
                       ),
-                    ],
-                  ),
-
+                    ),
+                  ]),
                   const SizedBox(height: 24),
-
-                  // Daftar Booking yang ditugaskan
-                  const Text(
-                    'Daftar Booking Ditugaskan',
-                    style: TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
+                  const Text('Daftar Booking Ditugaskan',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
-
                   StreamBuilder<QuerySnapshot>(
                     stream: _db
                         .collection('bookings')
-                        .where('petugasId',
-                            isEqualTo: widget.petugasUser.uid)
+                        .where('petugasId', isEqualTo: widget.petugasUser.uid)
                         .orderBy('createdAt', descending: true)
                         .snapshots(),
                     builder: (ctx, snap) {
-                      if (snap.connectionState ==
-                          ConnectionState.waiting) {
+                      if (snap.connectionState == ConnectionState.waiting) {
                         return const Center(
-                            child: CircularProgressIndicator(
-                                color: Colors.red));
+                            child: CircularProgressIndicator(color: Colors.red));
                       }
                       if (!snap.hasData || snap.data!.docs.isEmpty) {
                         return _emptyBooking();
                       }
                       return Column(
                         children: snap.data!.docs.map((doc) {
-                          final data = doc.data() as Map<String, dynamic>;
-                          return _bookingCard(data, doc.id);
+                          return _bookingCard(
+                              doc.data() as Map<String, dynamic>, doc.id);
                         }).toList(),
                       );
                     },
                   ),
-
-                  // Jika belum ada sistem booking real (Firestore 'bookings'),
-                  // tampilkan placeholder yang lebih bermanfaat
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.all(14),
@@ -435,20 +369,16 @@ class _PetugasDashboardScreenState extends State<PetugasDashboardScreen> {
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.blue.shade100),
                     ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.info_outline,
-                            color: Colors.blue, size: 18),
-                        SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            'Booking dari pelanggan akan muncul di sini setelah admin menugaskan Anda.',
-                            style: TextStyle(
-                                fontSize: 12, color: Colors.blue),
-                          ),
+                    child: const Row(children: [
+                      Icon(Icons.info_outline, color: Colors.blue, size: 18),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Booking dari pelanggan akan muncul di sini setelah admin menugaskan Anda.',
+                          style: TextStyle(fontSize: 12, color: Colors.blue),
                         ),
-                      ],
-                    ),
+                      ),
+                    ]),
                   ),
                 ],
               ),
@@ -471,21 +401,14 @@ class _PetugasDashboardScreenState extends State<PetugasDashboardScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          boxShadow: const [
-            BoxShadow(color: Colors.black12, blurRadius: 6)
-          ],
+          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6)],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: color, size: 22),
-            const SizedBox(height: 8),
-            valueWidget,
-            Text(label,
-                style:
-                    const TextStyle(fontSize: 12, color: Colors.grey)),
-          ],
-        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Icon(icon, color: color, size: 22),
+          const SizedBox(height: 8),
+          valueWidget,
+          Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        ]),
       ),
     );
   }
@@ -494,21 +417,18 @@ class _PetugasDashboardScreenState extends State<PetugasDashboardScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 32),
       alignment: Alignment.center,
-      child: Column(
-        children: [
-          Icon(Icons.event_busy,
-              size: 60, color: Colors.grey.shade300),
-          const SizedBox(height: 12),
-          const Text('Belum ada tugas booking',
-              style: TextStyle(color: Colors.grey)),
-        ],
-      ),
+      child: Column(children: [
+        Icon(Icons.event_busy, size: 60, color: Colors.grey.shade300),
+        const SizedBox(height: 12),
+        const Text('Belum ada tugas booking',
+            style: TextStyle(color: Colors.grey)),
+      ]),
     );
   }
 
   Widget _bookingCard(Map<String, dynamic> data, String docId) {
     final status = data['status'] ?? '-';
-    Color statusColor = status == 'Selesai'
+    final statusColor = status == 'Selesai'
         ? Colors.green
         : status == 'Dibatalkan'
             ? Colors.red
@@ -516,62 +436,48 @@ class _PetugasDashboardScreenState extends State<PetugasDashboardScreen> {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: Padding(
         padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  data['eventName'] ?? 'Event',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 15),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(status,
-                      style: TextStyle(
-                          color: statusColor,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold)),
-                ),
-              ],
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Text(data['eventName'] ?? 'Event',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(status,
+                  style: TextStyle(
+                      color: statusColor,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold)),
             ),
-            const SizedBox(height: 8),
-            _infoRow(Icons.calendar_today, data['date'] ?? '-'),
-            const SizedBox(height: 4),
-            _infoRow(Icons.location_on, data['location'] ?? '-'),
-            const SizedBox(height: 4),
-            _infoRow(Icons.local_activity, data['type'] ?? '-'),
-          ],
-        ),
+          ]),
+          const SizedBox(height: 8),
+          _infoRow(Icons.calendar_today, data['date'] ?? '-'),
+          const SizedBox(height: 4),
+          _infoRow(Icons.location_on, data['location'] ?? '-'),
+          const SizedBox(height: 4),
+          _infoRow(Icons.local_activity, data['type'] ?? '-'),
+        ]),
       ),
     );
   }
 
   Widget _infoRow(IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(icon, size: 14, color: Colors.grey),
-        const SizedBox(width: 6),
-        Text(text,
-            style: const TextStyle(fontSize: 12, color: Colors.grey)),
-      ],
-    );
+    return Row(children: [
+      Icon(icon, size: 14, color: Colors.grey),
+      const SizedBox(width: 6),
+      Text(text, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+    ]);
   }
 }
 
 // =====================================================================
-// 2. PETA — update lokasi GPS real-time + lihat rute ke event
+// 2. PETA PETUGAS
 // =====================================================================
 class PetugasMapScreen extends StatefulWidget {
   final UserModel petugasUser;
@@ -592,11 +498,9 @@ class _PetugasMapScreenState extends State<PetugasMapScreen> {
   LatLng? _myLocation;
   bool _isSharing = false;
   bool _loadingLocation = true;
+  bool _showPuskesmas = true;
 
-  // Armada milik petugas ini
   String? _ambId;
-
-  // Booking aktif (untuk tampil rute)
   Map<String, dynamic>? _activeBooking;
   LatLng? _eventLocation;
   List<LatLng> _routePoints = [];
@@ -620,7 +524,6 @@ class _PetugasMapScreenState extends State<PetugasMapScreen> {
   }
 
   Future<void> _initAll() async {
-    // Ambil lokasi awal
     final loc = await _mapService.getCurrentLocation();
     if (mounted) {
       setState(() {
@@ -634,27 +537,20 @@ class _PetugasMapScreenState extends State<PetugasMapScreen> {
       }
     }
 
-    // Cari ambulance yang di-assign
     final snap = await _db
         .collection('ambulances')
         .where('petugasId', isEqualTo: widget.petugasUser.uid)
         .limit(1)
         .get();
-    if (snap.docs.isNotEmpty) {
-      _ambId = snap.docs.first.id;
-    }
+    if (snap.docs.isNotEmpty) _ambId = snap.docs.first.id;
 
-    // Dengarkan lokasi real-time
     _locationSub = _mapService.getLocationStream().listen((latLng) {
       if (mounted) setState(() => _myLocation = latLng);
-      
-      // Update lokasi ambulance ke Firestore jika sharing aktif
       if (_isSharing && _ambId != null) {
         _mapService.updateAmbulanceLocation(_ambId!, latLng);
       }
     });
 
-    // Cari booking aktif yang di-assign ke petugas ini
     _listenActiveBooking();
   }
 
@@ -671,7 +567,6 @@ class _PetugasMapScreenState extends State<PetugasMapScreen> {
         final data = snap.docs.first.data();
         setState(() {
           _activeBooking = {...data, 'id': snap.docs.first.id};
-          // Dummy event location (dalam produksi: dari geocoding / data booking)
           _eventLocation = LatLng(
             (_myLocation?.latitude ?? _defaultCenter.latitude) + 0.012,
             (_myLocation?.longitude ?? _defaultCenter.longitude) + 0.018,
@@ -690,22 +585,13 @@ class _PetugasMapScreenState extends State<PetugasMapScreen> {
 
   void _toggleSharing() {
     setState(() => _isSharing = !_isSharing);
-    if (_isSharing) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('📍 Lokasi mulai dibagikan ke sistem'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Berbagi lokasi dihentikan'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(_isSharing
+          ? '📍 Lokasi mulai dibagikan ke sistem'
+          : 'Berbagi lokasi dihentikan'),
+      backgroundColor: _isSharing ? Colors.green : Colors.grey,
+      duration: const Duration(seconds: 2),
+    ));
   }
 
   Future<void> _loadRouteToEvent() async {
@@ -715,10 +601,7 @@ class _PetugasMapScreenState extends State<PetugasMapScreen> {
       _routePoints = [];
       _routeResult = null;
     });
-
-    final result =
-        await _routingService.getRoute(_myLocation!, _eventLocation!);
-
+    final result = await _routingService.getRoute(_myLocation!, _eventLocation!);
     if (mounted) {
       setState(() {
         _loadingRoute = false;
@@ -727,9 +610,7 @@ class _PetugasMapScreenState extends State<PetugasMapScreen> {
           _routeResult = result;
         }
       });
-      if (result != null && result.points.isNotEmpty) {
-        _fitBounds(result.points);
-      }
+      if (result != null && result.points.isNotEmpty) _fitBounds(result.points);
     }
   }
 
@@ -743,72 +624,191 @@ class _PetugasMapScreenState extends State<PetugasMapScreen> {
       if (p.longitude < minLng) minLng = p.longitude;
       if (p.longitude > maxLng) maxLng = p.longitude;
     }
-    _mapController.fitCamera(
-      CameraFit.bounds(
-        bounds: LatLngBounds(
-          LatLng(minLat - 0.005, minLng - 0.005),
-          LatLng(maxLat + 0.005, maxLng + 0.005),
-        ),
-        padding: const EdgeInsets.all(60),
+    _mapController.fitCamera(CameraFit.bounds(
+      bounds: LatLngBounds(
+        LatLng(minLat - 0.005, minLng - 0.005),
+        LatLng(maxLat + 0.005, maxLng + 0.005),
       ),
+      padding: const EdgeInsets.all(60),
+    ));
+  }
+
+  // ── Shared modal helper — FIX: isScrollControlled + padding safe area ──
+  void _showSheet(Widget content) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        final bottomInset = MediaQuery.of(ctx).viewInsets.bottom
+            + MediaQuery.of(ctx).padding.bottom;
+        return Padding(
+          padding: EdgeInsets.only(bottom: bottomInset),
+          child: content,
+        );
+      },
+    );
+  }
+
+  void _showPuskesmasInfo(PuskesmasLocation puskesmas) {
+    _showSheet(
+      Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10)],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle bar
+            Center(
+              child: Container(
+                width: 40, height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Row(children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.local_hospital,
+                    color: Colors.green, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(puskesmas.name,
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text('No. ${puskesmas.no}',
+                        style: const TextStyle(
+                            color: Colors.grey, fontSize: 12)),
+                  ],
+                ),
+              ),
+            ]),
+            const SizedBox(height: 12),
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Icon(Icons.location_on, size: 16, color: Colors.grey),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(puskesmas.address,
+                    style: const TextStyle(fontSize: 13, color: Colors.grey)),
+              ),
+            ]),
+            if (_myLocation != null) ...[
+              const SizedBox(height: 12),
+              const Divider(),
+              const SizedBox(height: 8),
+              Row(children: [
+                _infoChip(
+                  Icons.straighten,
+                  _mapService.formatDistance(
+                      _mapService.calculateDistance(_myLocation!, puskesmas.latLng)),
+                  Colors.blue,
+                ),
+                const SizedBox(width: 12),
+                _infoChip(
+                  Icons.access_time,
+                  _mapService.estimateTime(
+                      _mapService.calculateDistance(_myLocation!, puskesmas.latLng)),
+                  Colors.orange,
+                ),
+              ]),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _infoChip(IconData icon, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, size: 14, color: color),
+        const SizedBox(width: 4),
+        Text(label,
+            style: TextStyle(
+                color: color, fontSize: 12, fontWeight: FontWeight.bold)),
+      ]),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    // Pakai viewPadding agar dapat gesture bar height meski parent Scaffold sudah consume padding
+    final bottomNavHeight = 65.0 + MediaQuery.of(context).viewPadding.bottom;
+
     return Scaffold(
+      extendBody: false,
       body: Stack(
         children: [
-          // ── PETA ──
-          FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              initialCenter: _myLocation ?? _defaultCenter,
-              initialZoom: 13,
-              maxZoom: 18,
-              minZoom: 5,
-            ),
-            children: [
-              TileLayer(
-                urlTemplate:
-                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.example.ambuevent',
+          // ── PETA — dibatasi agar tidak bocor ke bawah nav bar ──
+          Positioned(
+            top: 0, left: 0, right: 0,
+            bottom: bottomNavHeight,
+            child: FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: _myLocation ?? _defaultCenter,
+                initialZoom: 13,
                 maxZoom: 18,
+                minZoom: 5,
               ),
-              if (_routePoints.isNotEmpty)
-                PolylineLayer(
-                  polylines: [
-                    Polyline(
-                      points: _routePoints,
-                      color: Colors.blue,
-                      strokeWidth: 4.5,
-                    ),
-                  ],
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.example.ambuevent',
+                  maxZoom: 18,
                 ),
-              MarkerLayer(
-                markers: [
+                if (_routePoints.isNotEmpty)
+                  PolylineLayer(polylines: [
+                    Polyline(
+                        points: _routePoints,
+                        color: Colors.blue,
+                        strokeWidth: 4.5),
+                  ]),
+                MarkerLayer(markers: [
                   if (_myLocation != null)
                     Marker(
-                      point: _myLocation!,
-                      width: 60,
-                      height: 60,
-                      child: _myMarker(),
-                    ),
+                        point: _myLocation!, width: 60, height: 60,
+                        child: _myMarker()),
                   if (_eventLocation != null)
                     Marker(
-                      point: _eventLocation!,
-                      width: 50,
-                      height: 60,
-                      child: _eventMarker(),
-                    ),
-                ],
-              ),
-              const RichAttributionWidget(
-                attributions: [
+                        point: _eventLocation!, width: 50, height: 60,
+                        child: _eventMarker()),
+                  if (_showPuskesmas)
+                    ..._mapService.getPuskesmasList().map((p) => Marker(
+                          point: p.latLng, width: 40, height: 40,
+                          child: GestureDetector(
+                            onTap: () => _showPuskesmasInfo(p),
+                            child: _puskesmasMarker(),
+                          ),
+                        )),
+                ]),
+                const RichAttributionWidget(attributions: [
                   TextSourceAttribution('OpenStreetMap contributors'),
-                ],
-              ),
-            ],
+                ]),
+              ],
+            ),
           ),
 
           if (_loadingLocation)
@@ -818,14 +818,11 @@ class _PetugasMapScreenState extends State<PetugasMapScreen> {
                 child: Card(
                   child: Padding(
                     padding: EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircularProgressIndicator(color: Colors.red),
-                        SizedBox(height: 12),
-                        Text('Mendapatkan lokasi...'),
-                      ],
-                    ),
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      CircularProgressIndicator(color: Colors.red),
+                      SizedBox(height: 12),
+                      Text('Mendapatkan lokasi...'),
+                    ]),
                   ),
                 ),
               ),
@@ -833,58 +830,82 @@ class _PetugasMapScreenState extends State<PetugasMapScreen> {
 
           // ── Top Bar ──
           Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
+            top: 0, left: 0, right: 0,
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    Material(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      elevation: 4,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 10),
-                        child: Row(
-                          children: [
-                            Icon(
-                              _isSharing
-                                  ? Icons.wifi_tethering
-                                  : Icons.wifi_tethering_off,
-                              color:
-                                  _isSharing ? Colors.green : Colors.grey,
-                              size: 18,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              _isSharing
-                                  ? 'Berbagi Lokasi: ON'
-                                  : 'Berbagi Lokasi: OFF',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                                color: _isSharing
-                                    ? Colors.green
-                                    : Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Material(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  elevation: 4,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    child: Row(children: [
+                      Icon(
+                        _isSharing
+                            ? Icons.wifi_tethering
+                            : Icons.wifi_tethering_off,
+                        color: _isSharing ? Colors.green : Colors.grey,
+                        size: 18,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 8),
+                      Text(
+                        _isSharing
+                            ? 'Berbagi Lokasi: ON'
+                            : 'Berbagi Lokasi: OFF',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: _isSharing ? Colors.green : Colors.grey),
+                      ),
+                    ]),
+                  ),
                 ),
               ),
             ),
           ),
 
-          // ── Tombol Recenter ──
+          // ── Legend + Toggle Puskesmas ──
+          Positioned(
+            right: 12, top: 100,
+            child: Column(children: [
+              _legendItem(Colors.blue, Icons.person_pin_circle, 'Lokasi Saya'),
+              const SizedBox(height: 8),
+              _legendItem(Colors.orange, Icons.event, 'Lokasi Event'),
+              const SizedBox(height: 8),
+              Material(
+                color: _showPuskesmas ? Colors.green : Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                elevation: 3,
+                child: InkWell(
+                  onTap: () => setState(() => _showPuskesmas = !_showPuskesmas),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 6),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.local_hospital,
+                          color: _showPuskesmas ? Colors.white : Colors.green,
+                          size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Puskesmas (${_mapService.getPuskesmasList().length})',
+                        style: TextStyle(
+                            fontSize: 10,
+                            color: _showPuskesmas ? Colors.white : Colors.black),
+                      ),
+                    ]),
+                  ),
+                ),
+              ),
+            ]),
+          ),
+
+          // ── Recenter ──
           Positioned(
             right: 12,
-            bottom: 230,
+            bottom: bottomNavHeight + _panelHeight() + 12,
             child: Material(
               color: Colors.white,
               shape: const CircleBorder(),
@@ -892,23 +913,19 @@ class _PetugasMapScreenState extends State<PetugasMapScreen> {
               child: InkWell(
                 customBorder: const CircleBorder(),
                 onTap: () {
-                  if (_myLocation != null) {
-                    _mapController.move(_myLocation!, 15);
-                  }
+                  if (_myLocation != null) _mapController.move(_myLocation!, 15);
                 },
                 child: const Padding(
-                  padding: EdgeInsets.all(12),
-                  child: Icon(Icons.my_location, color: Colors.blue, size: 24),
-                ),
+                    padding: EdgeInsets.all(12),
+                    child: Icon(Icons.my_location, color: Colors.blue, size: 24)),
               ),
             ),
           ),
 
           // ── Bottom Panel ──
           Positioned(
-            bottom: 80,
-            left: 16,
-            right: 16,
+            bottom: bottomNavHeight,
+            left: 0, right: 0,
             child: _buildBottomPanel(),
           ),
         ],
@@ -916,22 +933,25 @@ class _PetugasMapScreenState extends State<PetugasMapScreen> {
     );
   }
 
+  double _panelHeight() {
+    if (_activeBooking != null) return _routeResult != null ? 260 : 220;
+    return 120;
+  }
+
   Widget _buildBottomPanel() {
-    return Card(
-      elevation: 10,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Tombol toggle share lokasi
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Card(
+        elevation: 10,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: _toggleSharing,
-                icon: Icon(
-                    _isSharing ? Icons.stop_circle : Icons.play_circle),
+                icon: Icon(_isSharing ? Icons.stop_circle : Icons.play_circle),
                 label: Text(
                   _isSharing
                       ? 'Hentikan Berbagi Lokasi'
@@ -939,8 +959,7 @@ class _PetugasMapScreenState extends State<PetugasMapScreen> {
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      _isSharing ? Colors.red : Colors.green,
+                  backgroundColor: _isSharing ? Colors.red : Colors.green,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
@@ -948,41 +967,37 @@ class _PetugasMapScreenState extends State<PetugasMapScreen> {
                 ),
               ),
             ),
-
             if (_activeBooking != null) ...[
               const SizedBox(height: 12),
-              const Divider(),
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(Icons.event_available,
-                        color: Colors.orange, size: 20),
+              const Divider(height: 1),
+              const SizedBox(height: 10),
+              Row(children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _activeBooking!['eventName'] ?? 'Event Aktif',
+                  child: const Icon(Icons.event_available,
+                      color: Colors.orange, size: 20),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(_activeBooking!['eventName'] ?? 'Event Aktif',
                           style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 13),
-                        ),
-                        Text(
-                          '${_activeBooking!['date'] ?? '-'} • ${_activeBooking!['location'] ?? '-'}',
-                          style: const TextStyle(
-                              fontSize: 11, color: Colors.grey),
-                        ),
-                      ],
-                    ),
+                              fontWeight: FontWeight.bold, fontSize: 13)),
+                      Text(
+                        '${_activeBooking!['date'] ?? '-'} • ${_activeBooking!['location'] ?? '-'}',
+                        style:
+                            const TextStyle(fontSize: 11, color: Colors.grey),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ]),
               const SizedBox(height: 10),
               SizedBox(
                 width: double.infinity,
@@ -990,13 +1005,13 @@ class _PetugasMapScreenState extends State<PetugasMapScreen> {
                   onPressed: _loadingRoute ? null : _loadRouteToEvent,
                   icon: _loadingRoute
                       ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
+                          width: 16, height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.route, size: 18),
                   label: Text(
-                    _loadingRoute ? 'Menghitung rute...' : 'Lihat Rute ke Lokasi Event',
+                    _loadingRoute
+                        ? 'Menghitung rute...'
+                        : 'Lihat Rute ke Lokasi Event',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   style: OutlinedButton.styleFrom(
@@ -1037,85 +1052,99 @@ class _PetugasMapScreenState extends State<PetugasMapScreen> {
                 textAlign: TextAlign.center,
               ),
             ],
-          ],
+          ]),
         ),
       ),
     );
   }
 
   Widget _routeChip(IconData icon, String label) {
-    return Row(
-      children: [
-        Icon(icon, size: 14, color: Colors.blue),
-        const SizedBox(width: 4),
-        Text(label,
-            style: const TextStyle(
-                color: Colors.blue,
-                fontWeight: FontWeight.bold,
-                fontSize: 12)),
-      ],
+    return Row(children: [
+      Icon(icon, size: 14, color: Colors.blue),
+      const SizedBox(width: 4),
+      Text(label,
+          style: const TextStyle(
+              color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 12)),
+    ]);
+  }
+
+  Widget _legendItem(Color color, IconData icon, String label) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(8),
+      elevation: 3,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, color: color, size: 16),
+          const SizedBox(width: 4),
+          Text(label, style: const TextStyle(fontSize: 10)),
+        ]),
+      ),
     );
   }
 
   Widget _myMarker() {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: _isSharing
-                ? Colors.green.withValues(alpha: 0.25)
-                : Colors.blue.withValues(alpha: 0.2),
-            shape: BoxShape.circle,
-            border: Border.all(
-                color: _isSharing
-                    ? Colors.green.withValues(alpha: 0.6)
-                    : Colors.blue.withValues(alpha: 0.5),
-                width: 2),
-          ),
+    return Stack(alignment: Alignment.center, children: [
+      Container(
+        width: 40, height: 40,
+        decoration: BoxDecoration(
+          color: _isSharing
+              ? Colors.green.withValues(alpha: 0.25)
+              : Colors.blue.withValues(alpha: 0.2),
+          shape: BoxShape.circle,
+          border: Border.all(
+              color: _isSharing
+                  ? Colors.green.withValues(alpha: 0.6)
+                  : Colors.blue.withValues(alpha: 0.5),
+              width: 2),
         ),
-        Container(
-          width: 18,
-          height: 18,
-          decoration: BoxDecoration(
-            color: _isSharing ? Colors.green : Colors.blue,
-            shape: BoxShape.circle,
-            boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 4)],
-          ),
-          child: const Icon(Icons.person, color: Colors.white, size: 12),
+      ),
+      Container(
+        width: 18, height: 18,
+        decoration: BoxDecoration(
+          color: _isSharing ? Colors.green : Colors.blue,
+          shape: BoxShape.circle,
+          boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 4)],
         ),
-      ],
-    );
+        child: const Icon(Icons.person, color: Colors.white, size: 12),
+      ),
+    ]);
   }
 
   Widget _eventMarker() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: const BoxDecoration(
-            color: Colors.orange,
-            shape: BoxShape.circle,
-            boxShadow: [BoxShadow(color: Colors.black38, blurRadius: 4)],
-          ),
-          child: const Icon(Icons.event, color: Colors.white, size: 18),
+    return Column(mainAxisSize: MainAxisSize.min, children: [
+      Container(
+        padding: const EdgeInsets.all(6),
+        decoration: const BoxDecoration(
+          color: Colors.orange, shape: BoxShape.circle,
+          boxShadow: [BoxShadow(color: Colors.black38, blurRadius: 4)],
         ),
-        const Icon(Icons.arrow_drop_down, color: Colors.orange, size: 20),
-      ],
+        child: const Icon(Icons.event, color: Colors.white, size: 18),
+      ),
+      const Icon(Icons.arrow_drop_down, color: Colors.orange, size: 20),
+    ]);
+  }
+
+  Widget _puskesmasMarker() {
+    return Container(
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: Colors.white, shape: BoxShape.circle,
+        border: Border.all(color: Colors.green, width: 2),
+        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
+      ),
+      child: const Icon(Icons.local_hospital, color: Colors.green, size: 16),
     );
   }
 }
 
 // =====================================================================
-// 3. PROFIL — tampilan sama persis dengan MenuScreen (admin & user)
+// 3. PROFIL
 // =====================================================================
 class PetugasProfileScreen extends StatelessWidget {
   final UserModel petugasUser;
   final VoidCallback onLogout;
-
   const PetugasProfileScreen({
     super.key,
     required this.petugasUser,
@@ -1148,63 +1177,57 @@ class PetugasProfileScreen extends StatelessWidget {
                               fontSize: 28, fontWeight: FontWeight.bold)),
                     ],
                   ),
-                  Column(
-                    children: [
-                      Container(
-                        width: 70,
-                        height: 70,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: petugasUser.photoUrl.isNotEmpty
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
-                                  petugasUser.photoUrl,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => const Icon(
-                                      Icons.person,
-                                      size: 40,
-                                      color: Colors.grey),
-                                ),
-                              )
-                            : const Icon(Icons.person,
-                                size: 40, color: Colors.grey),
+                  Column(children: [
+                    Container(
+                      width: 70, height: 70,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      const SizedBox(height: 8),
-                      Text(petugasUser.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
-                      Text(petugasUser.email,
-                          style: const TextStyle(
-                              fontSize: 10, color: Colors.grey)),
-                    ],
-                  ),
+                      child: petugasUser.photoUrl.isNotEmpty
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                petugasUser.photoUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.person,
+                                    size: 40, color: Colors.grey),
+                              ),
+                            )
+                          : const Icon(Icons.person,
+                              size: 40, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(petugasUser.name,
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text(petugasUser.email,
+                        style: const TextStyle(
+                            fontSize: 10, color: Colors.grey)),
+                  ]),
                 ],
               ),
             ),
             const Divider(),
             Expanded(
-              child: ListView(
-                children: [
-                  _menuItem(Icons.notifications, "Notifications"),
-                  _menuItem(Icons.message, "Messages", badge: "2"),
-                  _menuItem(Icons.person, "My Profile"),
-                  _menuItem(Icons.settings, "Settings"),
-                  ListTile(
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(
-                          color: Colors.grey, shape: BoxShape.circle),
-                      child: const Icon(Icons.logout,
-                          color: Colors.white, size: 16),
-                    ),
-                    title: const Text("Logout",
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    onTap: onLogout,
+              child: ListView(children: [
+                _menuItem(Icons.notifications, "Notifications"),
+                _menuItem(Icons.message, "Messages", badge: "2"),
+                _menuItem(Icons.person, "My Profile"),
+                _menuItem(Icons.settings, "Settings"),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(
+                        color: Colors.grey, shape: BoxShape.circle),
+                    child: const Icon(Icons.logout,
+                        color: Colors.white, size: 16),
                   ),
-                ],
-              ),
+                  title: const Text("Logout",
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  onTap: onLogout,
+                ),
+              ]),
             ),
           ],
         ),
@@ -1227,7 +1250,8 @@ class PetugasProfileScreen extends StatelessWidget {
               decoration: const BoxDecoration(
                   color: Colors.orange, shape: BoxShape.circle),
               child: Text(badge,
-                  style: const TextStyle(color: Colors.white, fontSize: 10)),
+                  style: const TextStyle(
+                      color: Colors.white, fontSize: 10)),
             )
           : null,
     );

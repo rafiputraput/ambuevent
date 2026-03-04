@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../service/map_service.dart';
+import '../service/firestore_service.dart';
 
 class HomeScreen extends StatefulWidget {
   final String role;
@@ -51,6 +54,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final MapService _mapService = MapService();
   final MapController _mapController = MapController();
+  final FirestoreService _firestoreService = FirestoreService();
 
   static const LatLng _dinkesLocation =
       LatLng(-7.624662988533274, 111.4947916090254);
@@ -58,14 +62,16 @@ class _HomeScreenState extends State<HomeScreen> {
   LatLng? _userLocation;
   bool _locationLoaded = false;
   bool _pickingFile = false;
+  bool _isSubmitting = false;
 
+  DateTime? _selectedDate;
+
+  // ── Tipe acara: Pernikahan & Gathering dihapus ──
   final List<Map<String, dynamic>> _eventTypes = [
-    {'label': 'Konser', 'icon': Icons.music_note},
-    {'label': 'Olahraga', 'icon': Icons.emoji_events},
-    {'label': 'Pernikahan', 'icon': Icons.people_alt},
-    {'label': 'Gathering', 'icon': Icons.work},
-    {'label': 'Pengajian', 'icon': Icons.mosque},
-    {'label': 'Pencak Silat', 'icon': Icons.sports_martial_arts},
+    {'label': 'Konser',      'icon': Icons.music_note},
+    {'label': 'Olahraga',    'icon': Icons.emoji_events},
+    {'label': 'Pengajian',   'icon': Icons.mosque},
+    {'label': 'Pencak Silat','icon': Icons.sports_martial_arts},
   ];
 
   @override
@@ -118,9 +124,100 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _removeDoc(int index) {
-    final updated = List<String>.from(widget.uploadedDocNames)
-      ..removeAt(index);
+    final updated = List<String>.from(widget.uploadedDocNames)..removeAt(index);
     widget.onDocumentsChanged?.call(updated);
+  }
+
+  Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? now.add(const Duration(days: 1)),
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 365)),
+      builder: (ctx, child) => Theme(
+        data: Theme.of(ctx).copyWith(
+          colorScheme: const ColorScheme.light(primary: Colors.red),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedDate = picked;
+        widget.dateCtrl.text =
+            '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+      });
+    }
+  }
+
+  // ── SUBMIT BOOKING KE FIRESTORE ──
+  Future<void> _submitBooking() async {
+    if (widget.nameCtrl.text.trim().isEmpty) {
+      _showSnack('Nama event harus diisi!');
+      return;
+    }
+    if (widget.dateCtrl.text.trim().isEmpty) {
+      _showSnack('Tanggal event harus diisi!');
+      return;
+    }
+    if (widget.locCtrl.text.trim().isEmpty) {
+      _showSnack('Lokasi event harus diisi!');
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        _showSnack('Silakan login terlebih dahulu!');
+        setState(() => _isSubmitting = false);
+        return;
+      }
+
+      String userName = user.displayName ?? 'Pengguna';
+      try {
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+        if (userDoc.exists) {
+          userName = userDoc.data()?['name'] ?? userName;
+        }
+      } catch (_) {}
+
+      final bookingId = await _firestoreService.addBooking(
+        userId: user.uid,
+        userName: userName,
+        eventName: widget.nameCtrl.text.trim(),
+        date: widget.dateCtrl.text.trim(),
+        location: widget.locCtrl.text.trim(),
+        type: widget.eventType,
+        documentNames: widget.uploadedDocNames,
+      );
+
+      if (bookingId != null) {
+        widget.onConfirmBooking();
+        if (mounted) {
+          _showSnack('Booking berhasil dikirim! Menunggu konfirmasi admin.',
+              isSuccess: true);
+        }
+      } else {
+        _showSnack('Gagal mengirim booking. Coba lagi.');
+      }
+    } catch (e) {
+      _showSnack('Error: $e');
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  void _showSnack(String msg, {bool isSuccess = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(msg),
+      backgroundColor: isSuccess ? Colors.green : Colors.red,
+    ));
   }
 
   // =====================================================================
@@ -129,7 +226,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     if (widget.bookingState != 'idle') {
-      // Form booking pakai SizedBox.expand agar Column punya height constraint
       return SizedBox.expand(child: _buildBookingForm(context));
     }
 
@@ -146,8 +242,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   initialZoom: 15,
                   maxZoom: 18,
                   minZoom: 5,
-                  interactionOptions: InteractionOptions(
-                      flags: InteractiveFlag.none),
+                  interactionOptions:
+                      InteractionOptions(flags: InteractiveFlag.none),
                 ),
                 children: [
                   TileLayer(
@@ -171,8 +267,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                    color:
-                                        Colors.red.withValues(alpha: 0.4),
+                                    color: Colors.red.withValues(alpha: 0.4),
                                     blurRadius: 8,
                                     spreadRadius: 2)
                               ],
@@ -190,32 +285,34 @@ class _HomeScreenState extends State<HomeScreen> {
                         point: _userLocation!,
                         width: 40,
                         height: 40,
-                        child: Stack(alignment: Alignment.center, children: [
-                          Container(
-                            width: 30,
-                            height: 30,
-                            decoration: BoxDecoration(
-                              color: Colors.blue.withValues(alpha: 0.2),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                  color:
-                                      Colors.blue.withValues(alpha: 0.5),
-                                  width: 2),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              width: 30,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                color: Colors.blue.withValues(alpha: 0.2),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                    color: Colors.blue.withValues(alpha: 0.5),
+                                    width: 2),
+                              ),
                             ),
-                          ),
-                          Container(
-                            width: 12,
-                            height: 12,
-                            decoration: const BoxDecoration(
-                              color: Colors.blue,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                    color: Colors.black38, blurRadius: 3)
-                              ],
+                            Container(
+                              width: 12,
+                              height: 12,
+                              decoration: const BoxDecoration(
+                                color: Colors.blue,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                      color: Colors.black38, blurRadius: 3)
+                                ],
+                              ),
                             ),
-                          ),
-                        ]),
+                          ],
+                        ),
                       ),
                   ]),
                 ],
@@ -282,8 +379,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               style: TextStyle(
                                   fontWeight: FontWeight.bold, fontSize: 13)),
                           Text('Jl. Raya Solo No. 32, Jiwan',
-                              style: TextStyle(
-                                  fontSize: 10, color: Colors.grey)),
+                              style:
+                                  TextStyle(fontSize: 10, color: Colors.grey)),
                         ],
                       ),
                     ),
@@ -322,21 +419,25 @@ class _HomeScreenState extends State<HomeScreen> {
                         boxShadow: const [
                           BoxShadow(color: Colors.black26, blurRadius: 4)
                         ]),
-                    child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      const Icon(Icons.near_me, size: 12, color: Colors.blue),
-                      const SizedBox(width: 4),
-                      Text(
-                        _mapService.formatDistance(_mapService
-                            .calculateDistance(_userLocation!, _dinkesLocation)),
-                        style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue),
-                      ),
-                      const Text(' dari Anda',
-                          style:
-                              TextStyle(fontSize: 11, color: Colors.grey)),
-                    ]),
+                    child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.near_me,
+                              size: 12, color: Colors.blue),
+                          const SizedBox(width: 4),
+                          Text(
+                            _mapService.formatDistance(
+                                _mapService.calculateDistance(
+                                    _userLocation!, _dinkesLocation)),
+                            style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue),
+                          ),
+                          const Text(' dari Anda',
+                              style: TextStyle(
+                                  fontSize: 11, color: Colors.grey)),
+                        ]),
                   ),
                 ),
             ],
@@ -367,9 +468,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // =====================================================================
-  // IDLE CONTENT
-  // =====================================================================
   Widget _buildIdleContent() {
     if (widget.role == 'user') return _buildUserIdle();
     return _buildAdminIdle();
@@ -390,38 +488,36 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 12),
           const Text('Booking Event',
-              style:
-                  TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
           const Text(
             'Sediakan layanan medis standby untuk kelancaran event Anda.',
             textAlign: TextAlign.center,
-            style:
-                TextStyle(color: Colors.grey, fontSize: 13, height: 1.4),
+            style: TextStyle(color: Colors.grey, fontSize: 13, height: 1.4),
           ),
           const SizedBox(height: 24),
+          // ── Tombol Booking Utama ──
           SizedBox(
             width: double.infinity,
             height: 52,
             child: ElevatedButton.icon(
               onPressed: widget.onStartBooking,
-              icon: const Icon(Icons.calendar_month, size: 20),
-              label: const Text('PESAN AMBULANCE EVENT',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 14)),
+              icon: const Icon(Icons.add_circle_outline, size: 22),
+              label: const Text('BUAT BOOKING BARU',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
+                backgroundColor: Colors.red,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14)),
-                elevation: 2,
+                elevation: 3,
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
-            height: 48,
+            height: 46,
             child: OutlinedButton.icon(
               onPressed: widget.onGoToMap,
               icon: const Icon(Icons.map_outlined, size: 18),
@@ -434,6 +530,35 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.blue.shade100),
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  Icon(Icons.info_outline, size: 16, color: Colors.blue),
+                  SizedBox(width: 6),
+                  Text('Cara Booking',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                          fontSize: 13)),
+                ]),
+                SizedBox(height: 8),
+                _StepItem(no: '1', text: 'Tap "Buat Booking Baru"'),
+                _StepItem(no: '2', text: 'Isi detail event & upload dokumen'),
+                _StepItem(no: '3', text: 'Kirim & tunggu konfirmasi admin'),
+                _StepItem(no: '4', text: 'Cek status di tab Riwayat'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
         ],
       ),
     );
@@ -459,36 +584,51 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Dashboard Admin',
-                    style: TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold)),
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 Text('Kelola booking & armada',
                     style: TextStyle(color: Colors.grey, fontSize: 12)),
               ],
             ),
           ]),
           const SizedBox(height: 16),
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(10),
-              border: Border(
-                  left:
-                      BorderSide(color: Colors.blue.shade600, width: 4)),
-            ),
-            child: Row(children: [
-              Icon(Icons.notifications_active,
-                  size: 18, color: Colors.blue.shade700),
-              const SizedBox(width: 10),
-              const Expanded(
-                child: Text('3 Jadwal event baru masuk.',
-                    style: TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 13)),
-              ),
-              Icon(Icons.chevron_right,
-                  color: Colors.blue.shade400, size: 18),
-            ]),
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('bookings')
+                .where('status', isEqualTo: 'Menunggu Konfirmasi')
+                .snapshots(),
+            builder: (ctx, snap) {
+              final count = snap.data?.docs.length ?? 0;
+              if (count == 0) return const SizedBox.shrink();
+              return GestureDetector(
+                onTap: widget.onGoToAdminKegiatan,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border(
+                        left: BorderSide(
+                            color: Colors.blue.shade600, width: 4)),
+                  ),
+                  child: Row(children: [
+                    Icon(Icons.notifications_active,
+                        size: 18, color: Colors.blue.shade700),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        '$count booking baru menunggu konfirmasi.',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 13),
+                      ),
+                    ),
+                    Icon(Icons.chevron_right,
+                        color: Colors.blue.shade400, size: 18),
+                  ]),
+                ),
+              );
+            },
           ),
           const SizedBox(height: 16),
           const Text('Menu Utama',
@@ -565,7 +705,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // =====================================================================
   Widget _buildBookingForm(BuildContext context) {
     final topPad = MediaQuery.of(context).padding.top;
-    final botPad = MediaQuery.of(context).padding.bottom;
+    final botPad = MediaQuery.of(context).viewPadding.bottom;
 
     return Column(
       children: [
@@ -580,9 +720,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Colors.black87, size: 20),
             ),
             const Expanded(
-              child: Text('Detail Event',
-                  style: TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold)),
+              child: Text('Form Booking Event',
+                  style:
+                      TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ),
             IconButton(
               onPressed: widget.onCancelForm,
@@ -592,31 +732,55 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         const Divider(height: 1),
 
-        // Scrollable body
         Expanded(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
             children: [
+              _sectionLabel('Nama Event *'),
+              const SizedBox(height: 6),
               _buildTextField(
-                  'Nama Event', 'Contoh: Konser Fair', widget.nameCtrl),
-              const SizedBox(height: 12),
+                  'Contoh: Konser Rakyat Madiun', widget.nameCtrl,
+                  icon: Icons.event),
+
+              const SizedBox(height: 16),
+
               Row(children: [
                 Expanded(
-                  child: _buildTextField(
-                      'Tanggal', 'YYYY-MM-DD', widget.dateCtrl),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _sectionLabel('Tanggal *'),
+                      const SizedBox(height: 6),
+                      GestureDetector(
+                        onTap: _pickDate,
+                        child: AbsorbPointer(
+                          child: _buildTextField(
+                              'YYYY-MM-DD', widget.dateCtrl,
+                              icon: Icons.calendar_today),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: _buildTextField(
-                      'Lokasi', 'Contoh: GBK', widget.locCtrl),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _sectionLabel('Lokasi *'),
+                      const SizedBox(height: 6),
+                      _buildTextField('Contoh: GOR Madiun', widget.locCtrl,
+                          icon: Icons.location_on),
+                    ],
+                  ),
                 ),
               ]),
+
               const SizedBox(height: 20),
 
-              const Text('Tipe Acara:',
-                  style: TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.bold)),
+              _sectionLabel('Tipe Acara'),
               const SizedBox(height: 10),
+              // 4 tipe: grid 2x2
               GridView.count(
                 crossAxisCount: 2,
                 childAspectRatio: 3.0,
@@ -629,13 +793,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         e['label'] as String, e['icon'] as IconData))
                     .toList(),
               ),
+
               const SizedBox(height: 20),
 
-              // Dokumen
               Row(children: [
-                const Text('Dokumen Pendukung:',
-                    style: TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.bold)),
+                _sectionLabel('Dokumen Pendukung'),
                 const Spacer(),
                 GestureDetector(
                   onTap: _pickingFile ? null : _pickFiles,
@@ -733,11 +895,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 }),
                 TextButton.icon(
                   onPressed: _pickingFile ? null : _pickFiles,
-                  icon:
-                      const Icon(Icons.add, size: 15, color: Colors.grey),
+                  icon: const Icon(Icons.add, size: 15, color: Colors.grey),
                   label: const Text('Tambah file lagi',
-                      style:
-                          TextStyle(color: Colors.grey, fontSize: 12)),
+                      style: TextStyle(color: Colors.grey, fontSize: 12)),
                   style: TextButton.styleFrom(
                     padding: EdgeInsets.zero,
                     minimumSize: Size.zero,
@@ -750,17 +910,18 @@ class _HomeScreenState extends State<HomeScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
+                  color: Colors.orange.shade50,
                   borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange.shade200),
                 ),
                 child: Row(children: [
                   Icon(Icons.info_outline,
-                      size: 16, color: Colors.blue.shade700),
+                      size: 16, color: Colors.orange.shade700),
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text(
-                      'Tim medis hadir 1 jam sebelum acara di Loading Dock.',
-                      style: TextStyle(fontSize: 12, color: Colors.blue),
+                      'Tim medis hadir 1 jam sebelum acara. Booking akan dikonfirmasi oleh admin.',
+                      style: TextStyle(fontSize: 12, color: Colors.orange),
                     ),
                   ),
                 ]),
@@ -770,7 +931,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
 
-        // Tombol konfirmasi — FIXED di bawah, di atas nav bar
+        // ── Tombol Kirim Booking — FIXED di bawah ──
         Container(
           decoration: BoxDecoration(
             color: Colors.white,
@@ -787,19 +948,41 @@ class _HomeScreenState extends State<HomeScreen> {
             width: double.infinity,
             height: 52,
             child: ElevatedButton(
-              onPressed: widget.onConfirmBooking,
+              onPressed: _isSubmitting ? null : _submitBooking,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
                 foregroundColor: Colors.white,
+                disabledBackgroundColor: Colors.red.shade200,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
                 elevation: 0,
               ),
-              child: const Text(
-                'KONFIRMASI JADWAL',
-                style:
-                    TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-              ),
+              child: _isSubmitting
+                  ? const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2),
+                        ),
+                        SizedBox(width: 12),
+                        Text('Mengirim Booking...',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 15)),
+                      ],
+                    )
+                  : const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.send_rounded, size: 20),
+                        SizedBox(width: 8),
+                        Text('KIRIM BOOKING',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 15)),
+                      ],
+                    ),
             ),
           ),
         ),
@@ -807,29 +990,38 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // =====================================================================
-  // HELPERS
-  // =====================================================================
-  Widget _buildTextField(
-      String label, String hint, TextEditingController ctrl) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 12, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 4),
-        TextField(
-          controller: ctrl,
-          decoration: InputDecoration(
-            hintText: hint,
-            border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8)),
-            contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12, vertical: 12),
-          ),
+  Widget _sectionLabel(String label) {
+    return Text(label,
+        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold));
+  }
+
+  Widget _buildTextField(String hint, TextEditingController ctrl,
+      {IconData? icon}) {
+    return TextField(
+      controller: ctrl,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
+        prefixIcon: icon != null
+            ? Icon(icon, size: 18, color: Colors.grey)
+            : null,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey.shade300),
         ),
-      ],
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Colors.red, width: 1.5),
+        ),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        filled: true,
+        fillColor: Colors.grey.shade50,
+      ),
     );
   }
 
@@ -837,19 +1029,20 @@ class _HomeScreenState extends State<HomeScreen> {
     final bool isSelected = widget.eventType == label;
     return GestureDetector(
       onTap: () => widget.onEventTypeChanged(label),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
         decoration: BoxDecoration(
           color: isSelected ? Colors.red.shade50 : Colors.white,
           border: Border.all(
-              color: isSelected ? Colors.red : Colors.grey.shade300),
+              color: isSelected ? Colors.red : Colors.grey.shade300,
+              width: isSelected ? 1.5 : 1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon,
-                size: 16,
-                color: isSelected ? Colors.red : Colors.grey),
+                size: 16, color: isSelected ? Colors.red : Colors.grey),
             const SizedBox(width: 6),
             Text(label,
                 style: TextStyle(
@@ -864,17 +1057,43 @@ class _HomeScreenState extends State<HomeScreen> {
 
   IconData _fileIcon(String ext) {
     switch (ext) {
-      case 'pdf':
-        return Icons.picture_as_pdf;
+      case 'pdf':  return Icons.picture_as_pdf;
       case 'doc':
-      case 'docx':
-        return Icons.description;
+      case 'docx': return Icons.description;
       case 'jpg':
       case 'jpeg':
-      case 'png':
-        return Icons.image;
-      default:
-        return Icons.insert_drive_file;
+      case 'png':  return Icons.image;
+      default:     return Icons.insert_drive_file;
     }
+  }
+}
+
+class _StepItem extends StatelessWidget {
+  final String no;
+  final String text;
+  const _StepItem({required this.no, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(children: [
+        Container(
+          width: 20,
+          height: 20,
+          decoration: const BoxDecoration(
+              color: Colors.blue, shape: BoxShape.circle),
+          child: Center(
+            child: Text(no,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold)),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(text, style: const TextStyle(fontSize: 12, color: Colors.blue)),
+      ]),
+    );
   }
 }
