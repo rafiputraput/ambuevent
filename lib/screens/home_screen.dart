@@ -66,12 +66,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   DateTime? _selectedDate;
 
-  // ── Tipe acara: Pernikahan & Gathering dihapus ──
   final List<Map<String, dynamic>> _eventTypes = [
-    {'label': 'Konser',      'icon': Icons.music_note},
-    {'label': 'Olahraga',    'icon': Icons.emoji_events},
-    {'label': 'Pengajian',   'icon': Icons.mosque},
-    {'label': 'Pencak Silat','icon': Icons.sports_martial_arts},
+    {'label': 'Konser',       'icon': Icons.music_note},
+    {'label': 'Olahraga',     'icon': Icons.emoji_events},
+    {'label': 'Pengajian',    'icon': Icons.mosque},
+    {'label': 'Pencak Silat', 'icon': Icons.sports_martial_arts},
   ];
 
   @override
@@ -115,7 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text('Gagal memilih file: $e'),
-              backgroundColor: Colors.red),
+              backgroundColor: const Color(0xFFD94F4F)),
         );
       }
     } finally {
@@ -137,7 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
       lastDate: now.add(const Duration(days: 365)),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(primary: Colors.red),
+          colorScheme: const ColorScheme.light(primary: const Color(0xFFD94F4F)),
         ),
         child: child!,
       ),
@@ -151,8 +150,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // ── SUBMIT BOOKING KE FIRESTORE ──
-  Future<void> _submitBooking() async {
+  // ── VALIDASI LALU TAMPILKAN DIALOG KONFIRMASI ──
+  void _handleKirimBooking() {
     if (widget.nameCtrl.text.trim().isEmpty) {
       _showSnack('Nama event harus diisi!');
       return;
@@ -165,7 +164,160 @@ class _HomeScreenState extends State<HomeScreen> {
       _showSnack('Lokasi event harus diisi!');
       return;
     }
+    _showKonfirmasiDialog();
+  }
 
+  // ── DIALOG KONFIRMASI SEBELUM SUBMIT ──
+  void _showKonfirmasiDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF0F0),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.assignment_turned_in,
+                      color: const Color(0xFFD94F4F), size: 24),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'Konfirmasi Booking',
+                    style: TextStyle(
+                        fontSize: 17, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ]),
+
+              const SizedBox(height: 16),
+              const Divider(height: 1),
+              const SizedBox(height: 16),
+
+              // Detail ringkasan
+              _konfirmasiRow(Icons.event, 'Nama Event',
+                  widget.nameCtrl.text.trim()),
+              const SizedBox(height: 10),
+              _konfirmasiRow(Icons.calendar_today, 'Tanggal',
+                  widget.dateCtrl.text.trim()),
+              const SizedBox(height: 10),
+              _konfirmasiRow(Icons.location_on, 'Lokasi',
+                  widget.locCtrl.text.trim()),
+              const SizedBox(height: 10),
+              _konfirmasiRow(Icons.category, 'Tipe Acara',
+                  widget.eventType),
+
+              if (widget.uploadedDocNames.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                _konfirmasiRow(Icons.attach_file, 'Dokumen',
+                    '${widget.uploadedDocNames.length} file terlampir'),
+              ],
+
+              const SizedBox(height: 16),
+
+              // Info box
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF8F0),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFFFD59A)),
+                ),
+                child: Row(children: [
+                  Icon(Icons.info_outline,
+                      size: 16, color: const Color(0xFFB87333)),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Booking akan menunggu konfirmasi dari admin. Tim medis hadir 1 jam sebelum acara.',
+                      style: TextStyle(fontSize: 11, color: const Color(0xFFD4843A)),
+                    ),
+                  ),
+                ]),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Tombol aksi
+              Row(children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.grey.shade700,
+                      side: BorderSide(color: Colors.grey.shade400),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text('Periksa Lagi',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _submitBooking();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFD94F4F),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text('Ya, Kirim!',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ]),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _konfirmasiRow(IconData icon, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: const Color(0xFFD94F4F)),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 90,
+          child: Text(label,
+              style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w500)),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+                fontSize: 13, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── SUBMIT KE FIRESTORE ──
+  Future<void> _submitBooking() async {
     setState(() => _isSubmitting = true);
 
     try {
@@ -216,7 +368,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showSnack(String msg, {bool isSuccess = false}) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(msg),
-      backgroundColor: isSuccess ? Colors.green : Colors.red,
+      backgroundColor: isSuccess ? const Color(0xFF4CAF7D) : const Color(0xFFD94F4F),
     ));
   }
 
@@ -226,7 +378,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     if (widget.bookingState != 'idle') {
-      return SizedBox.expand(child: _buildBookingForm(context));
+      return _buildBookingForm(context);
     }
 
     return Column(
@@ -263,11 +415,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.red,
+                              color: const Color(0xFFD94F4F),
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                    color: Colors.red.withValues(alpha: 0.4),
+                                    color: const Color(0xFFD94F4F).withValues(alpha: 0.4),
                                     blurRadius: 8,
                                     spreadRadius: 2)
                               ],
@@ -276,7 +428,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 color: Colors.white, size: 20),
                           ),
                           const Icon(Icons.arrow_drop_down,
-                              color: Colors.red, size: 20),
+                              color: const Color(0xFFD94F4F), size: 20),
                         ],
                       ),
                     ),
@@ -292,10 +444,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               width: 30,
                               height: 30,
                               decoration: BoxDecoration(
-                                color: Colors.blue.withValues(alpha: 0.2),
+                                color: const Color(0xFF5B8DB8).withValues(alpha: 0.2),
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                    color: Colors.blue.withValues(alpha: 0.5),
+                                    color: const Color(0xFF5B8DB8).withValues(alpha: 0.5),
                                     width: 2),
                               ),
                             ),
@@ -303,7 +455,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               width: 12,
                               height: 12,
                               decoration: const BoxDecoration(
-                                color: Colors.blue,
+                                color: const Color(0xFF5B8DB8),
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
@@ -366,9 +518,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                          color: Colors.red.shade50, shape: BoxShape.circle),
+                          color: const Color(0xFFFFF0F0), shape: BoxShape.circle),
                       child: const Icon(Icons.local_hospital,
-                          color: Colors.red, size: 16),
+                          color: const Color(0xFFD94F4F), size: 16),
                     ),
                     const SizedBox(width: 10),
                     const Expanded(
@@ -401,7 +553,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: const Padding(
                         padding: EdgeInsets.all(10),
                         child: Icon(Icons.fullscreen,
-                            color: Colors.red, size: 22)),
+                            color: const Color(0xFFD94F4F), size: 22)),
                   ),
                 ),
               ),
@@ -423,7 +575,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const Icon(Icons.near_me,
-                              size: 12, color: Colors.blue),
+                              size: 12, color: const Color(0xFF5B8DB8)),
                           const SizedBox(width: 4),
                           Text(
                             _mapService.formatDistance(
@@ -432,7 +584,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.blue),
+                                color: const Color(0xFF5B8DB8)),
                           ),
                           const Text(' dari Anda',
                               style: TextStyle(
@@ -474,7 +626,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildUserIdle() {
+    final bottomPad = MediaQuery.of(context).padding.bottom + 70;
     return SingleChildScrollView(
+      padding: EdgeInsets.only(bottom: bottomPad),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -482,9 +636,9 @@ class _HomeScreenState extends State<HomeScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-                color: Colors.red.shade50, shape: BoxShape.circle),
+                color: const Color(0xFFFFF0F0), shape: BoxShape.circle),
             child: const Icon(Icons.medical_services_outlined,
-                size: 56, color: Colors.red),
+                size: 56, color: const Color(0xFFD94F4F)),
           ),
           const SizedBox(height: 12),
           const Text('Booking Event',
@@ -496,7 +650,6 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(color: Colors.grey, fontSize: 13, height: 1.4),
           ),
           const SizedBox(height: 24),
-          // ── Tombol Booking Utama ──
           SizedBox(
             width: double.infinity,
             height: 52,
@@ -506,7 +659,7 @@ class _HomeScreenState extends State<HomeScreen> {
               label: const Text('BUAT BOOKING BARU',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: const Color(0xFFD94F4F),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14)),
@@ -523,39 +676,11 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: const Icon(Icons.map_outlined, size: 18),
               label: const Text('Lihat Peta Lokasi'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.red,
-                side: const BorderSide(color: Colors.red),
+                foregroundColor: const Color(0xFFD94F4F),
+                side: const BorderSide(color: const Color(0xFFD94F4F)),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14)),
               ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.blue.shade100),
-            ),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Icon(Icons.info_outline, size: 16, color: Colors.blue),
-                  SizedBox(width: 6),
-                  Text('Cara Booking',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue,
-                          fontSize: 13)),
-                ]),
-                SizedBox(height: 8),
-                _StepItem(no: '1', text: 'Tap "Buat Booking Baru"'),
-                _StepItem(no: '2', text: 'Isi detail event & upload dokumen'),
-                _StepItem(no: '3', text: 'Kirim & tunggu konfirmasi admin'),
-                _StepItem(no: '4', text: 'Cek status di tab Riwayat'),
-              ],
             ),
           ),
           const SizedBox(height: 20),
@@ -565,7 +690,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildAdminIdle() {
+    final bottomPad = MediaQuery.of(context).padding.bottom + 70;
     return SingleChildScrollView(
+      padding: EdgeInsets.only(bottom: bottomPad),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -574,10 +701,10 @@ class _HomeScreenState extends State<HomeScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                  color: Colors.red.shade50,
+                  color: const Color(0xFFFFF0F0),
                   borderRadius: BorderRadius.circular(12)),
               child: const Icon(Icons.medical_services_outlined,
-                  color: Colors.red, size: 28),
+                  color: const Color(0xFFD94F4F), size: 28),
             ),
             const SizedBox(width: 12),
             const Column(
@@ -606,15 +733,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
+                    color: const Color(0xFFF0F5FA),
                     borderRadius: BorderRadius.circular(10),
                     border: Border(
                         left: BorderSide(
-                            color: Colors.blue.shade600, width: 4)),
+                            color: const Color(0xFF5B8DB8), width: 4)),
                   ),
                   child: Row(children: [
                     Icon(Icons.notifications_active,
-                        size: 18, color: Colors.blue.shade700),
+                        size: 18, color: const Color(0xFF5B8DB8)),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -624,7 +751,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     Icon(Icons.chevron_right,
-                        color: Colors.blue.shade400, size: 18),
+                        color: const Color(0xFF7AADD4), size: 18),
                   ]),
                 ),
               );
@@ -640,19 +767,19 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(children: [
             Expanded(
               child: _adminMenuCard('Kelola User', Icons.people_alt,
-                  Colors.blue, widget.onGoToAdminUser),
+                  const Color(0xFF5B8DB8), widget.onGoToAdminUser),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: _adminMenuCard('Kelola Armada', Icons.local_hospital,
-                  Colors.red, widget.onGoToAdminAmb),
+                  const Color(0xFFD94F4F), widget.onGoToAdminAmb),
             ),
           ]),
           const SizedBox(height: 10),
           Row(children: [
             Expanded(
               child: _adminMenuCard('Kegiatan', Icons.event_note,
-                  Colors.orange, widget.onGoToAdminKegiatan),
+                  const Color(0xFFD4843A), widget.onGoToAdminKegiatan),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -780,18 +907,33 @@ class _HomeScreenState extends State<HomeScreen> {
 
               _sectionLabel('Tipe Acara'),
               const SizedBox(height: 10),
-              // 4 tipe: grid 2x2
-              GridView.count(
-                crossAxisCount: 2,
-                childAspectRatio: 3.0,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
-                children: _eventTypes
-                    .map((e) => _eventTypeBtn(
-                        e['label'] as String, e['icon'] as IconData))
-                    .toList(),
+              // Gunakan Column + Row agar tidak ada whitespace berlebih
+              Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(child: _eventTypeBtn(
+                          _eventTypes[0]['label'] as String,
+                          _eventTypes[0]['icon'] as IconData)),
+                      const SizedBox(width: 8),
+                      Expanded(child: _eventTypeBtn(
+                          _eventTypes[1]['label'] as String,
+                          _eventTypes[1]['icon'] as IconData)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(child: _eventTypeBtn(
+                          _eventTypes[2]['label'] as String,
+                          _eventTypes[2]['icon'] as IconData)),
+                      const SizedBox(width: 8),
+                      Expanded(child: _eventTypeBtn(
+                          _eventTypes[3]['label'] as String,
+                          _eventTypes[3]['icon'] as IconData)),
+                    ],
+                  ),
+                ],
               ),
 
               const SizedBox(height: 20),
@@ -805,7 +947,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.red.shade50,
+                      color: const Color(0xFFFFF0F0),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -814,13 +956,13 @@ class _HomeScreenState extends State<HomeScreen> {
                               width: 14,
                               height: 14,
                               child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.red))
+                                  strokeWidth: 2, color: const Color(0xFFD94F4F)))
                           : const Icon(Icons.attach_file,
-                              size: 16, color: Colors.red),
+                              size: 16, color: const Color(0xFFD94F4F)),
                       const SizedBox(width: 4),
                       const Text('Pilih File',
                           style: TextStyle(
-                              color: Colors.red,
+                              color: const Color(0xFFD94F4F),
                               fontSize: 12,
                               fontWeight: FontWeight.w600)),
                     ]),
@@ -849,11 +991,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.upload_file,
-                              color: Colors.red.shade300, size: 22),
+                              color: const Color(0xFFD94F4F), size: 22),
                           const SizedBox(width: 10),
                           Text('Tap untuk memilih file dari HP',
                               style: TextStyle(
-                                  color: Colors.red.shade400,
+                                  color: const Color(0xFFD94F4F),
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500)),
                         ]),
@@ -888,7 +1030,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       GestureDetector(
                         onTap: () => _removeDoc(i),
                         child: Icon(Icons.close,
-                            size: 18, color: Colors.red.shade300),
+                            size: 18, color: const Color(0xFFD94F4F)),
                       ),
                     ]),
                   );
@@ -910,18 +1052,18 @@ class _HomeScreenState extends State<HomeScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
+                  color: const Color(0xFFFFF8F0),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.orange.shade200),
+                  border: Border.all(color: const Color(0xFFFFD59A)),
                 ),
                 child: Row(children: [
                   Icon(Icons.info_outline,
-                      size: 16, color: Colors.orange.shade700),
+                      size: 16, color: const Color(0xFFB87333)),
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text(
                       'Tim medis hadir 1 jam sebelum acara. Booking akan dikonfirmasi oleh admin.',
-                      style: TextStyle(fontSize: 12, color: Colors.orange),
+                      style: TextStyle(fontSize: 12, color: const Color(0xFFD4843A)),
                     ),
                   ),
                 ]),
@@ -932,6 +1074,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
 
         // ── Tombol Kirim Booking — FIXED di bawah ──
+        // Tambah 70 untuk tinggi BottomNav yang menindih dari parent
         Container(
           decoration: BoxDecoration(
             color: Colors.white,
@@ -948,11 +1091,12 @@ class _HomeScreenState extends State<HomeScreen> {
             width: double.infinity,
             height: 52,
             child: ElevatedButton(
-              onPressed: _isSubmitting ? null : _submitBooking,
+              // ← Sekarang panggil _handleKirimBooking (bukan langsung submit)
+              onPressed: _isSubmitting ? null : _handleKirimBooking,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: const Color(0xFFD94F4F),
                 foregroundColor: Colors.white,
-                disabledBackgroundColor: Colors.red.shade200,
+                disabledBackgroundColor: const Color(0xFFFFBBBB),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
                 elevation: 0,
@@ -1015,7 +1159,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Colors.red, width: 1.5),
+          borderSide: const BorderSide(color: const Color(0xFFD94F4F), width: 1.5),
         ),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -1031,10 +1175,11 @@ class _HomeScreenState extends State<HomeScreen> {
       onTap: () => widget.onEventTypeChanged(label),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
+        height: 44,
         decoration: BoxDecoration(
-          color: isSelected ? Colors.red.shade50 : Colors.white,
+          color: isSelected ? const Color(0xFFFFF0F0) : Colors.white,
           border: Border.all(
-              color: isSelected ? Colors.red : Colors.grey.shade300,
+              color: isSelected ? const Color(0xFFD94F4F) : const Color(0xFF9E9E9E),
               width: isSelected ? 1.5 : 1),
           borderRadius: BorderRadius.circular(8),
         ),
@@ -1042,13 +1187,13 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon,
-                size: 16, color: isSelected ? Colors.red : Colors.grey),
+                size: 16, color: isSelected ? const Color(0xFFD94F4F) : const Color(0xFF9E9E9E)),
             const SizedBox(width: 6),
             Text(label,
                 style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: isSelected ? Colors.red : Colors.grey)),
+                    color: isSelected ? const Color(0xFFD94F4F) : const Color(0xFF9E9E9E))),
           ],
         ),
       ),
@@ -1065,35 +1210,5 @@ class _HomeScreenState extends State<HomeScreen> {
       case 'png':  return Icons.image;
       default:     return Icons.insert_drive_file;
     }
-  }
-}
-
-class _StepItem extends StatelessWidget {
-  final String no;
-  final String text;
-  const _StepItem({required this.no, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(children: [
-        Container(
-          width: 20,
-          height: 20,
-          decoration: const BoxDecoration(
-              color: Colors.blue, shape: BoxShape.circle),
-          child: Center(
-            child: Text(no,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold)),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(text, style: const TextStyle(fontSize: 12, color: Colors.blue)),
-      ]),
-    );
   }
 }

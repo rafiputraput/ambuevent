@@ -32,8 +32,17 @@ class MyApp extends StatelessWidget {
       title: 'PSC 119 Event Medic',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.red,
-        scaffoldBackgroundColor: const Color(0xFFF3F4F6),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFFD94F4F),
+          primary: const Color(0xFFD94F4F),
+          brightness: Brightness.light,
+        ),
+        scaffoldBackgroundColor: const Color(0xFFF5F6F8),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFFD94F4F),
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
         fontFamily: 'Roboto',
         useMaterial3: true,
       ),
@@ -69,7 +78,6 @@ class AuthWrapper extends StatelessWidget {
 
             final user = userSnapshot.data!;
 
-            // ── PETUGAS → langsung ke halaman khusus petugas ──
             if (user.role == 'petugas') {
               return _PetugasEntryPoint(user: user);
             }
@@ -86,7 +94,6 @@ class AuthWrapper extends StatelessWidget {
   }
 }
 
-// Widget entrypoint untuk petugas agar bisa handle logout
 class _PetugasEntryPoint extends StatefulWidget {
   final UserModel user;
   const _PetugasEntryPoint({required this.user});
@@ -101,7 +108,6 @@ class _PetugasEntryPointState extends State<_PetugasEntryPoint> {
   Future<void> _handleLogout() async {
     setState(() => _loggingOut = true);
     await AuthService().signOut();
-    // AuthWrapper akan otomatis rebuild karena authStateChanges stream
   }
 
   @override
@@ -138,18 +144,15 @@ class _MainAppControllerState extends State<MainAppController> {
   String bookingState = 'idle';
   UserModel? _currentUser;
 
-  // Data lists
   List<Map<String, dynamic>> historyList = [];
   List<Map<String, dynamic>> usersList = [];
   List<Map<String, dynamic>> ambulancesList = [];
 
-  // Form controllers
   String eventType = 'Konser';
   final TextEditingController _eventNameController = TextEditingController();
   final TextEditingController _eventDateController = TextEditingController();
   final TextEditingController _eventLocController = TextEditingController();
 
-  // Upload dokumen (simpan nama file)
   List<String> _uploadedDocNames = [];
 
   @override
@@ -179,10 +182,7 @@ class _MainAppControllerState extends State<MainAppController> {
     super.dispose();
   }
 
-  // --- Actions ---
   void handleLogin(String role, {UserModel? user}) {
-    // Jika petugas login lewat login screen, arahkan ke PetugasHomeWrapper
-    // Ini ditangani oleh AuthWrapper via stream, tapi kita tetap set state
     setState(() {
       userRole = role;
       _currentUser = user;
@@ -235,7 +235,6 @@ class _MainAppControllerState extends State<MainAppController> {
     });
   }
 
-  // --- CRUD Actions ---
   void addUser(Map<String, dynamic> user) =>
       setState(() => usersList.add(user));
   void deleteUser(int id) =>
@@ -245,7 +244,6 @@ class _MainAppControllerState extends State<MainAppController> {
   void deleteAmbulance(int id) =>
       setState(() => ambulancesList.removeWhere((a) => a['id'] == id));
 
-  // --- Logout ---
   void handleLogout() async {
     await AuthService().signOut();
     if (mounted) {
@@ -263,6 +261,13 @@ class _MainAppControllerState extends State<MainAppController> {
     }
   }
 
+  // ── Tentukan apakah BottomNav harus ditampilkan ──
+  bool get _showBottomNav {
+    // Sembunyikan saat form booking aktif
+    if (currentScreen == 'home' && bookingState != 'idle') return false;
+    return ['home', 'map', 'history', 'menu'].contains(currentScreen);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -270,7 +275,7 @@ class _MainAppControllerState extends State<MainAppController> {
       body: Stack(
         children: [
           _buildScreen(),
-          if (['home', 'map', 'history', 'menu'].contains(currentScreen))
+          if (_showBottomNav)
             Positioned(
               bottom: 0,
               left: 0,

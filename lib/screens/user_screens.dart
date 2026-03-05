@@ -5,30 +5,29 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 // =====================================================================
-// HISTORY SCREEN — baca dari Firestore real-time
+// HISTORY SCREEN
 // =====================================================================
 class HistoryScreen extends StatelessWidget {
-  // Parameter lama dipertahankan agar tidak breaking change di main.dart
   final List<Map<String, dynamic>> history;
   const HistoryScreen({super.key, required this.history});
 
   Color _statusColor(String? status) {
     switch (status) {
-      case 'Disetujui': return Colors.green;
-      case 'Selesai':   return Colors.blue;
+      case 'Disetujui':  return const Color(0xFF4CAF7D);
+      case 'Selesai':    return Colors.blue;
       case 'Ditolak':
       case 'Dibatalkan': return Colors.red;
-      default:          return Colors.orange; // Menunggu Konfirmasi
+      default:           return Colors.orange;
     }
   }
 
   IconData _statusIcon(String? status) {
     switch (status) {
-      case 'Disetujui': return Icons.check_circle;
-      case 'Selesai':   return Icons.done_all;
+      case 'Disetujui':  return Icons.check_circle;
+      case 'Selesai':    return Icons.done_all;
       case 'Ditolak':
       case 'Dibatalkan': return Icons.cancel;
-      default:          return Icons.hourglass_empty;
+      default:           return Icons.hourglass_empty;
     }
   }
 
@@ -50,7 +49,7 @@ class HistoryScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Riwayat Booking'),
         centerTitle: true,
-        backgroundColor: Colors.red,
+        backgroundColor: const Color(0xFFD94F4F),
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -63,12 +62,24 @@ class HistoryScreen extends StatelessWidget {
               stream: FirebaseFirestore.instance
                   .collection('bookings')
                   .where('userId', isEqualTo: uid)
-                  .orderBy('createdAt', descending: true)
+                  // ── Hapus orderBy agar tidak perlu composite index ──
+                  // Sorting dilakukan di client (lihat di bawah)
                   .snapshots(),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                // Tampilkan data lama selagi loading (hindari flicker)
+                if (snapshot.connectionState == ConnectionState.waiting &&
+                    !snapshot.hasData) {
                   return const Center(
-                      child: CircularProgressIndicator(color: Colors.red));
+                      child: CircularProgressIndicator(color: const Color(0xFFD94F4F)));
+                }
+
+                // Tangani error (misal index belum ada)
+                if (snapshot.hasError) {
+                  return _emptyState(
+                    Icons.error_outline,
+                    'Gagal memuat riwayat',
+                    'Coba lagi beberapa saat.\n${snapshot.error}',
+                  );
                 }
 
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -79,7 +90,22 @@ class HistoryScreen extends StatelessWidget {
                   );
                 }
 
-                final docs = snapshot.data!.docs;
+                // ── Sort di client berdasarkan createdAt descending ──
+                final docs = List<QueryDocumentSnapshot>.from(
+                    snapshot.data!.docs);
+                docs.sort((a, b) {
+                  final aData = a.data() as Map<String, dynamic>;
+                  final bData = b.data() as Map<String, dynamic>;
+                  final aTime = aData['createdAt'];
+                  final bTime = bData['createdAt'];
+                  // Kalau createdAt masih null (pending server timestamp),
+                  // taruh di paling atas
+                  if (aTime == null) return -1;
+                  if (bTime == null) return 1;
+                  final aTs = (aTime as Timestamp).toDate();
+                  final bTs = (bTime as Timestamp).toDate();
+                  return bTs.compareTo(aTs); // descending
+                });
 
                 return ListView.builder(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
@@ -102,21 +128,25 @@ class HistoryScreen extends StatelessWidget {
 
   Widget _emptyState(IconData icon, String title, String subtitle) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 80, color: Colors.grey.shade300),
-          const SizedBox(height: 16),
-          Text(title,
-              style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey)),
-          const SizedBox(height: 6),
-          Text(subtitle,
-              style: const TextStyle(fontSize: 13, color: Colors.grey),
-              textAlign: TextAlign.center),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 80, color: Colors.grey.shade300),
+            const SizedBox(height: 16),
+            Text(title,
+                style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey),
+                textAlign: TextAlign.center),
+            const SizedBox(height: 6),
+            Text(subtitle,
+                style: const TextStyle(fontSize: 13, color: Colors.grey),
+                textAlign: TextAlign.center),
+          ],
+        ),
       ),
     );
   }
@@ -152,13 +182,13 @@ class _BookingCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Baris atas: status badge + tanggal ──
+            // ── Status badge + tanggal ──
             Row(children: [
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.12),
+                  color: statusColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: statusColor),
                 ),
@@ -184,10 +214,10 @@ class _BookingCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.red.shade50,
+                  color: const Color(0xFFD94F4F),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(eventIcon, color: Colors.red, size: 22),
+                child: Icon(eventIcon, color: const Color(0xFFD94F4F), size: 22),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -202,8 +232,7 @@ class _BookingCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       data['type'] ?? '-',
-                      style: const TextStyle(
-                          fontSize: 12, color: Colors.grey),
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                   ],
                 ),
@@ -214,7 +243,6 @@ class _BookingCard extends StatelessWidget {
             const Divider(height: 1),
             const SizedBox(height: 10),
 
-            // ── Detail ──
             _infoRow(Icons.location_on,
                 data['location'] ?? data['eventLoc'] ?? '-'),
             const SizedBox(height: 4),
@@ -223,7 +251,7 @@ class _BookingCard extends StatelessWidget {
                 data['petugasName'].toString().isNotEmpty) ...[
               _infoRow(Icons.medical_services,
                   'Petugas: ${data['petugasName']}',
-                  color: Colors.green),
+                  color: const Color(0xFF4CAF7D)),
               const SizedBox(height: 4),
             ],
 
@@ -233,38 +261,35 @@ class _BookingCard extends StatelessWidget {
                   'Armada: ${data['ambulancePlate']}',
                   color: Colors.blue),
 
-            // ── Dokumen ──
             if (docs.isNotEmpty) ...[
               const SizedBox(height: 8),
               Wrap(
                 spacing: 6,
                 runSpacing: 4,
                 children: docs.map((name) {
-                  final short = name.length > 22
-                      ? '${name.substring(0, 22)}...'
-                      : name;
+                  final short =
+                      name.length > 22 ? '${name.substring(0, 22)}...' : name;
                   return Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
+                      color: const Color(0xFFF0F5FA),
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: Colors.blue.shade200),
+                      border: Border.all(color: const Color(0xFFB8D4EC)),
                     ),
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
                       Icon(Icons.attach_file,
-                          size: 11, color: Colors.blue.shade700),
+                          size: 11, color: const Color(0xFF5B8DB8)),
                       const SizedBox(width: 3),
                       Text(short,
                           style: TextStyle(
-                              fontSize: 11, color: Colors.blue.shade700)),
+                              fontSize: 11, color: const Color(0xFF5B8DB8))),
                     ]),
                   );
                 }).toList(),
               ),
             ],
 
-            // ── Tombol Batalkan (hanya jika masih menunggu) ──
             if (status == 'Menunggu Konfirmasi') ...[
               const SizedBox(height: 12),
               SizedBox(
@@ -272,11 +297,11 @@ class _BookingCard extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: () => _confirmCancel(context),
                   icon: const Icon(Icons.cancel_outlined,
-                      size: 16, color: Colors.red),
+                      size: 16, color: const Color(0xFFD94F4F)),
                   label: const Text('Batalkan Booking',
-                      style: TextStyle(color: Colors.red)),
+                      style: TextStyle(color: const Color(0xFFD94F4F))),
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.red),
+                    side: const BorderSide(color: const Color(0xFFD94F4F)),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8)),
                     padding: const EdgeInsets.symmetric(vertical: 8),
@@ -296,8 +321,7 @@ class _BookingCard extends StatelessWidget {
       const SizedBox(width: 6),
       Expanded(
         child: Text(text,
-            style: TextStyle(
-                fontSize: 12, color: color ?? Colors.grey)),
+            style: TextStyle(fontSize: 12, color: color ?? Colors.grey)),
       ),
     ]);
   }
@@ -325,12 +349,12 @@ class _BookingCard extends StatelessWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Booking berhasil dibatalkan.'),
-                    backgroundColor: Colors.orange,
+                    backgroundColor: const Color(0xFFD4843A),
                   ),
                 );
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD94F4F)),
             child: const Text('Ya, Batalkan',
                 style: TextStyle(color: Colors.white)),
           ),
@@ -457,7 +481,7 @@ class MenuScreen extends StatelessWidget {
           ? Container(
               padding: const EdgeInsets.all(6),
               decoration: const BoxDecoration(
-                  color: Colors.orange, shape: BoxShape.circle),
+                  color: const Color(0xFFD4843A), shape: BoxShape.circle),
               child: Text(badge,
                   style: const TextStyle(
                       color: Colors.white, fontSize: 10)),

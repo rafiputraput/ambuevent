@@ -93,7 +93,7 @@ class _AdminUserScreenState extends State<AdminUserScreen> {
                           const SnackBar(
                             content: Text(
                                 'Lengkapi semua field! Password min 6 karakter.'),
-                            backgroundColor: Colors.red,
+                            backgroundColor: const Color(0xFFD94F4F),
                           ),
                         );
                         return;
@@ -133,14 +133,14 @@ class _AdminUserScreenState extends State<AdminUserScreen> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text('Error: $e'),
-                              backgroundColor: Colors.red,
+                              backgroundColor: const Color(0xFFD94F4F),
                             ),
                           );
                         }
                       }
                     },
               style:
-                  ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                  ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD94F4F)),
               child: isLoading
                   ? const SizedBox(
                       width: 20,
@@ -148,7 +148,7 @@ class _AdminUserScreenState extends State<AdminUserScreen> {
                       child: CircularProgressIndicator(
                           color: Colors.white, strokeWidth: 2),
                     )
-                  : const Text('Simpan'),
+                  : const Text('Simpan', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -219,14 +219,14 @@ class _AdminUserScreenState extends State<AdminUserScreen> {
                           ? 'User berhasil diupdate!'
                           : 'Gagal update user'),
                       backgroundColor:
-                          success ? Colors.green : Colors.red,
+                          success ? Colors.green : const Color(0xFFD94F4F),
                     ));
                   }
                 }
               },
               style:
                   ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-              child: const Text('Update'),
+              child: const Text('Update', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -260,12 +260,20 @@ class _AdminUserScreenState extends State<AdminUserScreen> {
               }
             },
             style:
-                ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Hapus'),
+                ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD94F4F)),
+            child: const Text('Hapus', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
+  }
+
+  Color _roleColor(String? role) {
+    switch (role) {
+      case 'admin':   return Colors.red;
+      case 'petugas': return Colors.orange;
+      default:        return Colors.blue;
+    }
   }
 
   @override
@@ -273,7 +281,7 @@ class _AdminUserScreenState extends State<AdminUserScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Manajemen User'),
-        backgroundColor: Colors.red,
+        backgroundColor: const Color(0xFFD94F4F),
         foregroundColor: Colors.white,
         leading: IconButton(
           onPressed: widget.onBack,
@@ -282,7 +290,8 @@ class _AdminUserScreenState extends State<AdminUserScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddUserDialog,
-        backgroundColor: Colors.red,
+        backgroundColor: const Color(0xFFD94F4F),
+        foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: const Text('Tambah User'),
       ),
@@ -309,66 +318,116 @@ class _AdminUserScreenState extends State<AdminUserScreen> {
           }
           final users = snapshot.data!;
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
             itemCount: users.length,
             itemBuilder: (ctx, i) {
               final u = users[i];
+              final role = u['role'] ?? 'user';
+              final name = u['name'] ?? 'No Name';
+              final email = u['email'] ?? '';
+              final photo = u['photoUrl'] ?? '';
+
               return Card(
                 margin: const EdgeInsets.only(bottom: 12),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: u['role'] == 'admin'
-                        ? Colors.red.shade100
-                        : (u['role'] == 'petugas'
-                            ? Colors.orange.shade100
-                            : Colors.blue.shade100),
-                    backgroundImage:
-                        u['photoUrl'] != null && u['photoUrl'].isNotEmpty
-                            ? NetworkImage(u['photoUrl'])
-                            : null,
-                    child: u['photoUrl'] == null || u['photoUrl'].isEmpty
-                        ? Icon(
-                            u['role'] == 'admin'
-                                ? Icons.shield
-                                : (u['role'] == 'petugas'
-                                    ? Icons.medical_services
-                                    : Icons.person),
-                            color: u['role'] == 'admin'
-                                ? Colors.red
-                                : (u['role'] == 'petugas'
-                                    ? Colors.orange
-                                    : Colors.blue),
-                          )
-                        : null,
-                  ),
-                  title: Text(u['name'] ?? 'No Name',
-                      style:
-                          const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text(u['email'] ?? ''),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                elevation: 2,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 10),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Chip(
-                        label: Text(
-                          (u['role'] ?? 'user').toString().toUpperCase(),
-                          style: const TextStyle(
-                              fontSize: 10, color: Colors.white),
+                      // Avatar
+                      CircleAvatar(
+                        radius: 24,
+                        backgroundColor:
+                            _roleColor(role).withValues(alpha: 0.15),
+                        backgroundImage: photo.isNotEmpty
+                            ? NetworkImage(photo)
+                            : null,
+                        child: photo.isEmpty
+                            ? Text(
+                                name.isNotEmpty
+                                    ? name[0].toUpperCase()
+                                    : '?',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                    color: _roleColor(role)),
+                              )
+                            : null,
+                      ),
+                      const SizedBox(width: 12),
+
+                      // Info
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              name,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              email,
+                              style: const TextStyle(
+                                  fontSize: 12, color: Colors.grey),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 6),
+                            // Role badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: _roleColor(role),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                role.toUpperCase(),
+                                style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
                         ),
-                        backgroundColor: u['role'] == 'admin'
-                            ? Colors.red
-                            : (u['role'] == 'petugas'
-                                ? Colors.orange
-                                : Colors.blue),
                       ),
-                      IconButton(
-                        onPressed: () => _showEditUserDialog(u),
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                      ),
-                      IconButton(
-                        onPressed: () =>
-                            _confirmDelete(u['uid'], u['name'] ?? 'User'),
-                        icon:
-                            const Icon(Icons.delete, color: Colors.red),
+
+                      // Action buttons
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 36,
+                            height: 36,
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              onPressed: () => _showEditUserDialog(u),
+                              icon: const Icon(Icons.edit,
+                                  color: Colors.blue, size: 20),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 36,
+                            height: 36,
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              onPressed: () =>
+                                  _confirmDelete(u['uid'], name),
+                              icon: const Icon(Icons.delete,
+                                  color: const Color(0xFFD94F4F), size: 20),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -492,14 +551,14 @@ class _AdminAmbulanceScreenState extends State<AdminAmbulanceScreen> {
                           ? 'Armada berhasil ditambahkan!'
                           : 'Gagal tambah armada'),
                       backgroundColor:
-                          success ? Colors.green : Colors.red,
+                          success ? Colors.green : const Color(0xFFD94F4F),
                     ));
                   }
                 }
               },
               style:
-                  ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              child: const Text('Simpan'),
+                  ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD94F4F)),
+              child: const Text('Simpan', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -605,13 +664,13 @@ class _AdminAmbulanceScreenState extends State<AdminAmbulanceScreen> {
                         ? 'Armada berhasil diupdate!'
                         : 'Gagal update armada'),
                     backgroundColor:
-                        success ? Colors.green : Colors.red,
+                        success ? Colors.green : const Color(0xFFD94F4F),
                   ));
                 }
               },
               style:
                   ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-              child: const Text('Update'),
+              child: const Text('Update', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -646,8 +705,8 @@ class _AdminAmbulanceScreenState extends State<AdminAmbulanceScreen> {
               }
             },
             style:
-                ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Hapus'),
+                ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD94F4F)),
+            child: const Text('Hapus', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -659,7 +718,7 @@ class _AdminAmbulanceScreenState extends State<AdminAmbulanceScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Manajemen Armada'),
-        backgroundColor: Colors.red,
+        backgroundColor: const Color(0xFFD94F4F),
         foregroundColor: Colors.white,
         leading: IconButton(
           onPressed: widget.onBack,
@@ -668,7 +727,8 @@ class _AdminAmbulanceScreenState extends State<AdminAmbulanceScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddDialog,
-        backgroundColor: Colors.red,
+        backgroundColor: const Color(0xFFD94F4F),
+        foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: const Text('Tambah Armada'),
       ),
@@ -695,7 +755,7 @@ class _AdminAmbulanceScreenState extends State<AdminAmbulanceScreen> {
           }
           final ambulances = snapshot.data!;
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
             itemCount: ambulances.length,
             itemBuilder: (ctx, i) {
               final a = ambulances[i];
@@ -706,59 +766,88 @@ class _AdminAmbulanceScreenState extends State<AdminAmbulanceScreen> {
                       : Colors.blue);
               return Card(
                 margin: const EdgeInsets.only(bottom: 12),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: Colors.red.shade100,
-                    child: const Icon(Icons.local_hospital,
-                        color: Colors.red),
-                  ),
-                  title: Text(a['plate'] ?? '',
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16)),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 10),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const SizedBox(height: 4),
-                      Row(
+                      CircleAvatar(
+                        radius: 24,
+                        backgroundColor: const Color(0xFFD94F4F),
+                        child: const Icon(Icons.local_hospital,
+                            color: const Color(0xFFD94F4F), size: 22),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(a['plate'] ?? '',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15)),
+                            const SizedBox(height: 3),
+                            Row(children: [
+                              const Icon(Icons.person,
+                                  size: 13, color: Colors.grey),
+                              const SizedBox(width: 3),
+                              Flexible(
+                                child: Text(
+                                  a['petugasName'] ?? 'Belum ada',
+                                  style: const TextStyle(
+                                      fontSize: 12, color: Colors.grey),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ]),
+                            const SizedBox(height: 5),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: statusColor.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: statusColor),
+                              ),
+                              child: Text(
+                                a['status'] ?? 'Tersedia',
+                                style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: statusColor),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.person,
-                              size: 14, color: Colors.grey),
-                          const SizedBox(width: 4),
-                          Text(
-                              'Petugas: ${a['petugasName'] ?? 'Belum ada'}'),
+                          SizedBox(
+                            width: 36,
+                            height: 36,
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              onPressed: () => _showEditDialog(a),
+                              icon: const Icon(Icons.edit,
+                                  color: Colors.blue, size: 20),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 36,
+                            height: 36,
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              onPressed: () =>
+                                  _confirmDelete(a['id'], a['plate'] ?? ''),
+                              icon: const Icon(Icons.delete,
+                                  color: const Color(0xFFD94F4F), size: 20),
+                            ),
+                          ),
                         ],
-                      ),
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: statusColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: statusColor),
-                        ),
-                        child: Text(
-                          a['status'] ?? 'Tersedia',
-                          style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: statusColor),
-                        ),
-                      ),
-                    ],
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        onPressed: () => _showEditDialog(a),
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                      ),
-                      IconButton(
-                        onPressed: () =>
-                            _confirmDelete(a['id'], a['plate'] ?? ''),
-                        icon:
-                            const Icon(Icons.delete, color: Colors.red),
                       ),
                     ],
                   ),
@@ -804,7 +893,7 @@ class _AdminKegiatanScreenState extends State<AdminKegiatanScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Kegiatan & Penjadwalan'),
-        backgroundColor: Colors.red,
+        backgroundColor: const Color(0xFFD94F4F),
         foregroundColor: Colors.white,
         leading: IconButton(
           onPressed: widget.onBack,
@@ -850,7 +939,7 @@ class _KegiatanTab extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-              child: CircularProgressIndicator(color: Colors.red));
+              child: CircularProgressIndicator(color: const Color(0xFFD94F4F)));
         }
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return _emptyState(Icons.event_busy, 'Belum ada kegiatan masuk',
@@ -928,11 +1017,11 @@ class _KegiatanCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.red.shade50,
+                    color: const Color(0xFFD94F4F),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(_eventIcon(data['type']),
-                      color: Colors.red, size: 22),
+                      color: const Color(0xFFD94F4F), size: 22),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -953,7 +1042,7 @@ class _KegiatanCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.12),
+                    color: statusColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: statusColor),
                   ),
@@ -1000,8 +1089,8 @@ class _KegiatanCard extends StatelessWidget {
                       icon: const Icon(Icons.close, size: 16),
                       label: const Text('Tolak'),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
+                        foregroundColor: const Color(0xFFD94F4F),
+                        side: const BorderSide(color: const Color(0xFFD94F4F)),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8)),
                       ),
@@ -1069,7 +1158,7 @@ class _KegiatanCard extends StatelessWidget {
       padding:
           const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.blue.shade50,
+        color: const Color(0xFFF0F5FA),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: Colors.blue.shade200),
       ),
@@ -1239,7 +1328,7 @@ class _JadwalTab extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-              child: CircularProgressIndicator(color: Colors.red));
+              child: CircularProgressIndicator(color: const Color(0xFFD94F4F)));
         }
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return _emptyState(
@@ -1292,7 +1381,7 @@ class _DateGroup extends StatelessWidget {
           padding:
               const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
-              color: Colors.red,
+              color: const Color(0xFFD94F4F),
               borderRadius: BorderRadius.circular(20)),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -1422,7 +1511,7 @@ class _RekapTab extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-              child: CircularProgressIndicator(color: Colors.red));
+              child: CircularProgressIndicator(color: const Color(0xFFD94F4F)));
         }
 
         final docs = snapshot.data?.docs ?? [];
@@ -1479,7 +1568,7 @@ class _RekapTab extends StatelessWidget {
                 _statCard(
                     'Selesai', selesai, Colors.teal, Icons.done_all),
                 _statCard(
-                    'Ditolak', ditolak, Colors.red, Icons.cancel),
+                    'Ditolak', ditolak, const Color(0xFFD94F4F), Icons.cancel),
               ],
             ),
             const SizedBox(height: 24),
@@ -1526,7 +1615,7 @@ class _RekapTab extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
+              color: color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: color, size: 22),
@@ -1614,9 +1703,9 @@ class _RekapTab extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 22,
-            backgroundColor: Colors.red.shade100,
+            backgroundColor: const Color(0xFFD94F4F),
             child: const Icon(Icons.medical_services,
-                color: Colors.red, size: 20),
+                color: const Color(0xFFD94F4F), size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1627,12 +1716,12 @@ class _RekapTab extends StatelessWidget {
             padding: const EdgeInsets.symmetric(
                 horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.red.shade50,
+              color: const Color(0xFFD94F4F),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text('$count tugas',
                 style: TextStyle(
-                    color: Colors.red.shade700,
+                    color: const Color(0xFFD94F4F),
                     fontWeight: FontWeight.bold,
                     fontSize: 12)),
           ),
